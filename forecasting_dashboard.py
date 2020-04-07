@@ -496,7 +496,7 @@ df_UK['hospital_lat'] = hospital_lat
 df_UK['hospital_lon'] = hospital_lon
 
 df_UK_merged = df_UK.merge(merged_df[["Org Name", "Total ", "General & Acute",  "Total .1", "General & Acute.1","lat","lon"]], how='inner', left_on=["hospital_lon", "hospital_lat"], right_on=["lon","lat"])
-df_UK_merged['Free Beds Without COVID-19'] = df_UK_merged['General & Acute'] - df_UK_merged['General & Acute.1']
+df_UK_merged['Free Beds Without COVID-19'] = df_UK_merged['Total '] - df_UK_merged['Total .1']
 
 Free_Beds_INCLUDING_COVID = []
 counts_list = df_UK_merged.groupby(by=['GSS_NM'])['GSS_NM'].count()
@@ -558,20 +558,6 @@ df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']
 df_UK = df_UK_tmp
 
 
-# df_UK = pd.read_csv('df_UK.csv')
-# del df_UK['Unnamed: 0']
-
-# In[23]:
-
-
-df_UK
-
-
-# df_UK.to_csv('df_UK.csv')
-
-# In[24]:
-
-
 UKTable= pd.DataFrame(columns=CANTable.columns)
 UKTable['Province/State'] = df_UK['GSS_NM']
 UKTable['Confirmed'] = df_UK['TotalCases']
@@ -602,13 +588,6 @@ UKTable_append
 
 
 # In[27]:
-
-
-dfs[keyList[0]].columns
-
-
-# In[28]:
-
 
 ###get_ipython().run_cell_magic('time', '', "# Save numbers into variables to use in the app\nconfirmedCases=int(dfs[keyList[0]]['Confirmed'].sum())\ndeathsCases=int(dfs[keyList[0]]['Deaths'].sum())\nrecoveredCases=int(dfs[keyList[0]]['Recovered'].sum())\n\n# Construct confirmed cases dataframe for line plot and 24-hour window case difference\ndf_confirmed, plusConfirmedNum, plusPercentNum1 = df_for_lineplot_diff(dfs, 'Confirmed')\n\n\n# Construct recovered cases dataframe for line plot and 24-hour window case difference\ndf_recovered, plusRecoveredNum, plusPercentNum2 = df_for_lineplot_diff(dfs, 'Recovered')\n\n\n# Construct death case dataframe for line plot and 24-hour window case difference\ndf_deaths, plusDeathNum, plusPercentNum3 = df_for_lineplot_diff(dfs, 'Deaths')\n\n# Construct remaining case dataframe for line plot and 24-hour window case difference\ndf_remaining, plusRemainNum, plusRemainNum3 = df_for_lineplot_diff(dfs, 'Remaining')")
 confirmedCases=int(dfs[keyList[0]]['Confirmed'].sum())
