@@ -1399,7 +1399,8 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                     cases on an hourly timescale. New feature added - click on UK tab in Cases by Country and you can see the Free Bed forecasting for NHS Trusts in England. \
                     For the UK free bed forecasting NHS Q1 2019 data was used as a baseline before forecasting the number of COVID-19 cases from the current d ata in the UK \
                     then trying to predict the current number of free beds in England NHS trusts \
-                    and then forecast the current number of beds in 1 week based on an Imperial College study of an estimated 8.2% hospitalisation rate \
+                    and then forecast the current number of beds in 1 week based on an Imperial College study of an estimated 8.2% hospitalisation rate. \
+                    Important note: Please note that the case forecasting model and the bed forecasting model is experimental and not yet validated (as cases have not yet arrived since the model is being developed as the pandemic unfolds). The model is only as good as its assumptions and starting data both of which are likely to have limitations, especially this early in the pandemic and therefore it should not be used for clinical decision making. \
                     Open Source code available in python: https://github.com/jonathanmckinnell/COVID-19-forecasting-dashboard".format(latestDate, int(confirmedCases)),
                 ),
                 html.P(
