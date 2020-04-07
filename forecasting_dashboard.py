@@ -406,16 +406,20 @@ df_UK["lat"] = np.nan
 df_UK["lon"] = np.nan
 df_UK.head()
 
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
-geolocator = Nominatim(user_agent="covid_shahinrostami.com")
+df_UK_lat_lon = pd.read_csv('df_UK_lat_lon.csv')
+del df_UK_lat_lon['Unnamed: 0']
+df_UK = df_UK.merge(df_UK_lat_lon, how='outer', left_on=["GSS_NM"], right_on=["GSS_NM"])
 
-for index, row in df_UK.iterrows():
-    location = geolocator.geocode(row.GSS_NM+", UK",timeout=100)
-    df_UK.loc[index,'lat'] = location.latitude 
-    df_UK.loc[index,'lon'] = location.longitude
-
-print("Done!")
+#from geopy.geocoders import Nominatim
+#from geopy.exc import GeocoderTimedOut
+#geolocator = Nominatim(user_agent="covid_shahinrostami.com")
+#
+#for index, row in df_UK.iterrows():
+#    location = geolocator.geocode(row.GSS_NM+", UK",timeout=100)
+#    df_UK.loc[index,'lat'] = location.latitude 
+#    df_UK.loc[index,'lon'] = location.longitude
+#
+#print("Done!")
 
 
 # In[18]:
