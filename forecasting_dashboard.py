@@ -402,8 +402,6 @@ df_england_beds_region['Free General & Acute'][2:].plot(figsize=(50,5), kind='ba
 # download UK regional cases
 url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
 df_UK = pd.read_csv(url)
-df_UK["lat"] = np.nan
-df_UK["lon"] = np.nan
 df_UK.head()
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon.csv')
@@ -780,7 +778,7 @@ UKTable_append[UKTable_append['Province/State']=='UK']
 
 # Line plot for combine cases
 # Set up tick scale based on confirmed case number
-tickList = list(np.arange(0, df_remaining['Total'].max()+2000, 10000))
+tickList = list(np.arange(0, df_remaining['Total'].max()+2000, 100000))
 
 # Create empty figure canvas
 fig_combine = go.Figure()
