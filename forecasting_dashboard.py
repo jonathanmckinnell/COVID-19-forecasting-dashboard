@@ -406,7 +406,7 @@ df_UK["lat"] = np.nan
 df_UK["lon"] = np.nan
 df_UK.head()
 
-df_UK_lat_lon = pd.read_csv('df_UK_lat_lon.csv')
+df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon.csv')
 del df_UK_lat_lon['Unnamed: 0']
 df_UK = df_UK.merge(df_UK_lat_lon, how='outer', left_on=["GSS_NM"], right_on=["GSS_NM"])
 
