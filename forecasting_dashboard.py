@@ -1105,11 +1105,9 @@ df_region
 UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).copy()
 UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
 UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "lat_x": "lat", "lon_x": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
-
-df_UK_merged
-
-
-UKTable
+# Set row ids pass to selected_row_ids
+UKTable['id'] = UKTable['Country/Region']
+UKTable.set_index('id', inplace=True, drop=False)
 
 # In[42]:
 
@@ -1608,7 +1606,7 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                             dash_table.DataTable(
                                                 id='datatable-interact-location-uk',
                                                 # Don't show coordinates
-                                                columns=[{"name": i, "id": i} for i in UKTable.columns[:-2]],
+                                                columns=[{"name": i, "id": i} for i in UKTable.columns[:-3]],
                                                 # But still store coordinates in the table for interactivity
                                                 data=UKTable.to_dict("rows"),
                                                 row_selectable="single",
@@ -2098,21 +2096,29 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
 
 def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
     print('Inside update_lineplot_uk ', derived_virtual_selected_rows, selected_row_ids)
-    if derived_virtual_selected_rows is None:
-        derived_virtual_selected_rows = []
-    
-    if derived_virtual_selected_rows != None:
-        if len(derived_virtual_selected_rows) > 0:
+
+    if selected_row_ids is None:
+        selected_row_ids = []
+
+        if derived_virtual_selected_rows != None:
+            if len(derived_virtual_selected_rows) > 0:
+                print(derived_virtual_selected_rows)
                 if derived_virtual_selected_rows[0] != None:
                     Region = UKTable.iloc[derived_virtual_selected_rows[0]]['Country/Region']
                     print(Region)
+                else:
+                    Region = 'UK'
+                    print('default')
+            else:
+                Region = 'UK'
+                print('default')
+
         else:
             Region = 'UK'
             print('default')
-                
     else:
-        Region = 'UK'
-        print('default')
+        Region = selected_row_ids[0]
+
         
     if Region == "UK": Region = 'United Kingdom'
     # Read cumulative data of a given region from ./cumulative_data folder
