@@ -1102,7 +1102,6 @@ df_region
 # In[41]:
 
 
-UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).copy()
 UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['GSS_NM']).copy()
 UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
 UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "lat_x": "lat", "lon_x": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
