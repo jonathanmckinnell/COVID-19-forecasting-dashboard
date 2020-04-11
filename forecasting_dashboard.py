@@ -212,22 +212,7 @@ for key, df in dfs.items():
 # In[9]:
 
 
-#merged_df = left_df.merge(right_df, how='inner', left_on=["A", "B"], right_on=["A2","B2"])
-merged_df = dfs[keyList[0]].merge(time_series_data_confirmed[["Province/State", "Country/Region", "3/30/20"]], how='outer', left_on=["Province/State", "Country/Region"], right_on=["Province/State", "Country/Region"])
-merged_df['Confirmed'] = merged_df['3/30/20']
-del merged_df['3/30/20']
-merged_df = merged_df.merge(time_series_data_deaths[["Province/State", "Country/Region", "3/30/20"]], how='outer', left_on=["Province/State", "Country/Region"], right_on=["Province/State", "Country/Region"])
-merged_df['Deaths'] = merged_df['3/30/20']
-del merged_df['3/30/20']
-merged_df = merged_df.merge(time_series_data_recovered[["Province/State", "Country/Region", "3/30/20"]], how='outer', left_on=["Province/State", "Country/Region"], right_on=["Province/State", "Country/Region"])
-merged_df['Recovered'] = merged_df['3/30/20']
-del merged_df['3/30/20']
-
-
 # In[10]:
-
-
-merged_df.columns
 
 
 # In[11]:
@@ -578,8 +563,8 @@ UKTable_append = UKTable.copy()
 
 
 UKTable_append['Country/Region']='UK'
-UKTable_append['Last Update'] = '2020-03-24 22:00:00'
-UKTable_append['Date_last_updated_AEDT'] = '2020-03-24 22:00:00'
+###UKTable_append['Last Update'] = '2020-03-24 22:00:00'
+###UKTable_append['Date_last_updated_AEDT'] = '2020-03-24 22:00:00'
 UKTable_append['Recovered'] = 0
 UKTable_append['Deaths'] = 0
 UKTable_append['Remaining'] = 0
@@ -681,7 +666,7 @@ fig_confirmed.add_trace(go.Scatter(x=df_confirmed['Date'].fillna(''), y=df_confi
                                                line=dict(width=1,color='#921113')),
                                    text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_confirmed['Date'].fillna(pd.Timestamp('20200101'))],
                                    hovertext=['Mainland China confirmed<br>{:,d} cases<br>'.format(int(i)) for i in df_confirmed['Mainland China'].fillna(0)],
-                                   hovertemplate='<b>%{text}</b><br></br>'+
+                                   hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'))
 fig_confirmed.add_trace(go.Scatter(x=df_confirmed['Date'].fillna(''), y=df_confirmed['Other locations'],
@@ -693,7 +678,7 @@ fig_confirmed.add_trace(go.Scatter(x=df_confirmed['Date'].fillna(''), y=df_confi
                                                line=dict(width=1,color='#eb5254')),
                                    text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_confirmed['Date'].fillna(pd.Timestamp('20200101'))],
                                    hovertext=['Other region confirmed<br>{:,d} cases<br>'.format(int(i)) for i in df_confirmed['Other locations'].fillna(0)],
-                                   hovertemplate='<b>%{text}</b><br></br>'+
+                                   hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'))
 # Customise layout
@@ -771,7 +756,7 @@ fig_combine.add_trace(go.Scatter(x=df_recovered['Date'], y=df_recovered['Total']
                                                line=dict(width=1,color='#168038')),
                                    text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_recovered['Date'].fillna(pd.Timestamp('20200101'))],
                                    hovertext=['Total recovered<br>{:,d} cases<br>'.format(int(i)) for i in df_recovered['Total'].fillna(0)],
-                                   hovertemplate='<b>%{text}</b><br></br>'+
+                                   hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'))
 fig_combine.add_trace(go.Scatter(x=df_deaths['Date'].fillna(pd.Timestamp('20200101')), y=df_deaths['Total'].fillna(0),
@@ -783,7 +768,7 @@ fig_combine.add_trace(go.Scatter(x=df_deaths['Date'].fillna(pd.Timestamp('202001
                                             line=dict(width=1,color='#626262')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
                                 hovertext=['Total death<br>{:,d} cases<br>'.format(int(i)) for i in df_deaths['Total'].fillna(0)],
-                                hovertemplate='<b>%{text}</b><br></br>'+
+                                hovertemplate='<b>%{text}</b><br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
 fig_combine.add_trace(go.Scatter(x=df_remaining['Date'].fillna(pd.Timestamp('20200101')), y=df_remaining['Total'].fillna(0),
@@ -795,7 +780,7 @@ fig_combine.add_trace(go.Scatter(x=df_remaining['Date'].fillna(pd.Timestamp('202
                                             line=dict(width=1,color='#e36209')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
                                 hovertext=['Total remaining<br>{:,d} cases<br>'.format(int(i)) for i in df_remaining['Total'].fillna(0)],
-                                hovertemplate='<b>%{text}</b><br></br>'+
+                                hovertemplate='<b>%{text}</b><br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
 
@@ -858,7 +843,7 @@ fig_rate.add_trace(go.Scatter(x=df_deaths['Date'], y=df_deaths['Mainland China']
                                             line=dict(width=1,color='#626262')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
                                 hovertext=['Mainland China death rate<br>{:.2f}%'.format(float(i)) for i in (df_deaths['Mainland China']/df_confirmed['Mainland China']).fillna(0)*100],
-                                hovertemplate='<b>%{text}</b><br></br>'+
+                                hovertemplate='<b>%{text}</b><br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
 fig_rate.add_trace(go.Scatter(x=df_deaths['Date'], y=df_deaths['Other locations']/df_confirmed['Other locations']*100,
@@ -870,7 +855,7 @@ fig_rate.add_trace(go.Scatter(x=df_deaths['Date'], y=df_deaths['Other locations'
                                             line=dict(width=1,color='#a7a7a7')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
                                 hovertext=['Other region death rate<br>{:.2f}%'.format(float(i)) for i in (df_deaths['Other locations']/df_confirmed['Other locations']).fillna(0)*100],
-                                hovertemplate='<b>%{text}</b><br></br>'+
+                                hovertemplate='<b>%{text}</b><br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
 
@@ -1143,7 +1128,7 @@ fig.add_trace(go.Scatter(x=df_region['date_day'],
                          #            line=dict(width=1,color='#921113')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                          hovertext=['{} confirmed<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Confirmed']],
-                         hovertemplate='<b>%{text}</b><br></br>'+
+                         hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'),
                          secondary_y=False,
@@ -1158,7 +1143,7 @@ fig.add_trace(go.Scatter(x=df_region['date_day'],
                          #            line=dict(width=1,color='#168038')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                          hovertext=['{} Recovered<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Recovered']],
-                         hovertemplate='<b>%{text}</b><br></br>'+
+                         hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'),
                          secondary_y=False,
@@ -1173,7 +1158,7 @@ fig.add_trace(go.Scatter(x=df_region['date_day'],
                          #            line=dict(width=1,color='#626262')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                          hovertext=['{} Deaths<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Deaths']],
-                         hovertemplate='<b>%{text}</b><br></br>'+
+                         hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'),
                          secondary_y=False,
@@ -1190,7 +1175,7 @@ fig.add_trace(go.Bar(x=df_region['date_day'],
                          #            line=dict(width=1,color='#626262')),
                      text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                      hovertext=['{} New<br>{} cases<br>'.format(Region, i) for i in df_region['New']],
-                     hovertemplate='<b>%{text}</b><br></br>'+
+                     hovertemplate='<b>%{text}</b><br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'
                     ),
@@ -1943,7 +1928,7 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
                                          line=dict(width=4,color='#d7191c')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} confirmed<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Confirmed']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -1960,7 +1945,7 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
                                  line=dict(width=1,color='#272e3e')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in date_list],
                              hovertext=['{} Predicted<br>{:,d} cases<br>'.format(Region, i) for i in y_logistic],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -1976,7 +1961,7 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#168038')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} Recovered<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Recovered']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -1991,7 +1976,7 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#626262')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} Deaths<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Deaths']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -2008,7 +1993,7 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#626262')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                          hovertext=['{} New<br>{} cases<br>'.format(Region, i) for i in df_region['New']],
-                         hovertemplate='<b>%{text}</b><br></br>'+
+                         hovertemplate='<b>%{text}</b><br>'+
                                                   '%{hovertext}'+
                                                   '<extra></extra>'
                         ),
@@ -2173,7 +2158,7 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                                          line=dict(width=4,color='#d7191c')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} confirmed<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Confirmed']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -2190,7 +2175,7 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                                  line=dict(width=1,color='#272e3e')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in date_list],
                              hovertext=['{} Predicted<br>{:,d} cases<br>'.format(Region, i) for i in y_logistic],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -2206,7 +2191,7 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#168038')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} Recovered<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Recovered']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -2221,7 +2206,7 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#626262')),
                              text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                              hovertext=['{} Deaths<br>{:,d} cases<br>'.format(Region, i) for i in df_region['Deaths']],
-                             hovertemplate='<b>%{text}</b><br></br>'+
+                             hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
                              secondary_y=False,
@@ -2238,7 +2223,7 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                              #            line=dict(width=1,color='#626262')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
                          hovertext=['{} New<br>{} cases<br>'.format(Region, i) for i in df_region['New']],
-                         hovertemplate='<b>%{text}</b><br></br>'+
+                         hovertemplate='<b>%{text}</b><br>'+
                                                   '%{hovertext}'+
                                                   '<extra></extra>'
                         ),
