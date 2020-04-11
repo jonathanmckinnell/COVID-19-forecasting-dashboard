@@ -42,7 +42,7 @@ my_path = os.path.dirname(os.path.realpath(__file__))
 
 if os.path.isdir('./COVID-19'):
     print("checkout fresh version")
-    pull = "git checkout ." 
+    pull = "git pull"
     path = r"./COVID-19"
 
     #os.system("sshpass -p your_password ssh user_name@your_localhost")
@@ -857,7 +857,7 @@ fig_rate.add_trace(go.Scatter(x=df_deaths['Date'], y=df_deaths['Mainland China']
                                 marker=dict(size=4, color='#f4f4f2',
                                             line=dict(width=1,color='#626262')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
-                                hovertext=['Mainland China death rate<br>{:.2f}%'.format(int(i)) for i in (df_deaths['Mainland China']/df_confirmed['Mainland China']).fillna(0)*100],
+                                hovertext=['Mainland China death rate<br>{:.2f}%'.format(float(i)) for i in (df_deaths['Mainland China']/df_confirmed['Mainland China']).fillna(0)*100],
                                 hovertemplate='<b>%{text}</b><br></br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
@@ -869,7 +869,7 @@ fig_rate.add_trace(go.Scatter(x=df_deaths['Date'], y=df_deaths['Other locations'
                                 marker=dict(size=4, color='#f4f4f2',
                                             line=dict(width=1,color='#a7a7a7')),
                                 text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_deaths['Date'].fillna(pd.Timestamp('20200101'))],
-                                hovertext=['Other region death rate<br>{:.2f}%'.format(int(i)) for i in (df_deaths['Other locations']/df_confirmed['Other locations']).fillna(0)*100],
+                                hovertext=['Other region death rate<br>{:.2f}%'.format(float(i)) for i in (df_deaths['Other locations']/df_confirmed['Other locations']).fillna(0)*100],
                                 hovertemplate='<b>%{text}</b><br></br>'+
                                               '%{hovertext}'+
                                               '<extra></extra>'))
@@ -1103,6 +1103,7 @@ df_region
 
 
 UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).copy()
+UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['GSS_NM']).copy()
 UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
 UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "lat_x": "lat", "lon_x": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
 # Set row ids pass to selected_row_ids
@@ -1398,7 +1399,7 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                     For the UK free bed forecasting NHS Q1 2019 data was used as a baseline before forecasting the number of COVID-19 cases from the current d ata in the UK \
                     then trying to predict the current number of free beds in England NHS trusts \
                     and then forecast the current number of beds in 1 week based on an Imperial College study of an estimated 8.2% hospitalisation rate. \
-                    Important note: Please note that the case forecasting model and the bed forecasting model is experimental and not yet validated (as cases have not yet arrived since the model is being developed as the pandemic unfolds). The model is only as good as its assumptions and starting data both of which are likely to have limitations, especially this early in the pandemic and therefore it should not be used for clinical decision making. \
+                    Important note: Please note that the case forecasting model and the bed forecasting model are experimental and not yet validated (as cases have not yet arrived since the model is being developed as the pandemic unfolds). The model is only as good as its assumptions and starting data both of which are likely to have limitations, especially this early in the pandemic and therefore it should not be used for clinical decision making. \
                     Open Source code available in python: https://github.com/jonathanmckinnell/COVID-19-forecasting-dashboard".format(latestDate, int(confirmedCases)),
                 ),
                 html.P(
@@ -1614,7 +1615,7 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                                 style_as_list_view=True,
                                                 style_cell={'height': 'auto',
                                                             # all three widths are needed
-                                                            'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
+                                                            'minWidth': '72px', 'width': '120px', 'maxWidth': '180px',
                                                             'whiteSpace': 'normal',
                                                             'font_family':'Arial',
                                                             'font_size':'1.2rem',
@@ -1631,12 +1632,14 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                                             },
                                                 style_header={'backgroundColor':'#f4f4f2',
                                                               'fontWeight':'bold'},
-                                                style_cell_conditional=[{'if': {'column_id':'Province/State'},'width':'28%'},
-                                                                        {'if': {'column_id':'Remaining'},'width':'18%'},
-                                                                        {'if': {'column_id':'Confirmed'},'width':'18%'},
-                                                                        {'if': {'column_id':'Recovered'},'width':'18%'},
-                                                                        {'if': {'column_id':'Deaths'},'width':'18%'},
-                                                                        {'if': {'column_id':'Confirmed'},'color':'#d7191c'},
+                                                style_cell_conditional=[{'if': {'column_id':'GSS_NM'},'width':'25%'},
+                                                                        {'if': {'column_id':'Org Name'},'width':'25%'},
+                                                                        {'if': {'column_id':'TotalCases'},'width':'10%'},
+                                                                        {'if': {'column_id':'Free Beds INCLUDING COVID-19'},'width':'10%'},
+                                                                        {'if': {'column_id':'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'},'width':'10%'},
+                                                                        {'if': {'column_id':'Free Beds Without COVID-19'},'width':'10%'},
+                                                                        {'if': {'column_id':'count'},'width':'10%'},
+                                                                        {'if': {'column_id':'TotalCases'},'color':'#d7191c'},
                                                                         {'if': {'column_id':'Recovered'},'color':'#1a9622'},
                                                                         {'if': {'column_id':'Deaths'},'color':'#6c6c6c'},
                                                                         {'textAlign': 'center'}],
@@ -2325,5 +2328,4 @@ if __name__ == '__main__':
 
 
 print("here")
-
 
