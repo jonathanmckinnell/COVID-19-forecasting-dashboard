@@ -432,7 +432,8 @@ excel_sheet_name = 'UTLAs'
 df_UK_timeseries = pd.read_excel(excel_url,sheet_name = excel_sheet_name, header=8)
 df_UK = df_UK_timeseries[[df_UK_timeseries.columns[1], df_UK_timeseries.columns[-1]]]
 df_UK.columns = ['GSS_NM', 'TotalCases']
-df_UK.head()
+df_UK = df_UK[:-1] # remove England region from end
+
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon.csv')
 del df_UK_lat_lon['Unnamed: 0']
