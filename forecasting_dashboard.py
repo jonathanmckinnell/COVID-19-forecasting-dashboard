@@ -269,15 +269,56 @@ CANTable
 
 # # Step 1: Build the UK COVID-19 forecase
 
+
+
+def build_df_region(Region):
+    if Region == 'UK':
+        Region = 'United Kingdom'
+    df_region = pd.DataFrame(time_series_data_confirmed[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+    if len(df_region.columns) > 1:
+        s = df_region.sum().sort_values(ascending=False, inplace=False)
+        df_region = pd.DataFrame(df_region[s[:1].index[0]].astype(int))
+        df_region.columns = ['Confirmed']
+        df_region_recovered = pd.DataFrame(time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+        s = df_region_recovered.sum().sort_values(ascending=False, inplace=False)
+        df_region_recovered = pd.DataFrame(df_region_recovered[s[:1].index[0]].astype(int))
+        df_region['Recovered'] = df_region_recovered
+        df_region_deaths = pd.DataFrame(time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+        s = df_region_deaths.sum().sort_values(ascending=False, inplace=False)
+        df_region_deaths = pd.DataFrame(df_region_deaths[s[:1].index[0]].astype(int))
+        df_region['Deaths'] = df_region_deaths
+    else:
+        df_region.columns = ['Confirmed']
+        df_region['Recovered'] = time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
+        df_region['Deaths'] = time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
+    df_region['New'] = df_region['Confirmed'].astype(int).diff().fillna(0)
+    list_days = []
+    for i in range(1,len(df_region['Confirmed'])+1):
+        list_days.append(df_region['Confirmed'][:i].astype(bool).sum(axis=0))
+    df_region['DayElapsed'] = list_days
+    df_region['date_day'] = df_region.index
+    date_list = []
+    for date_str in df_region['date_day']:
+        date_list.append(datetime.strptime(date_str, '%m/%d/%y'))
+    df_region['Date_last_updated_AEDT'] = date_list
+    df_region['Date_last_updated_AEDT'] = df_region['Date_last_updated_AEDT'] + timedelta(hours=16)
+    df_region=df_region.astype({'Date_last_updated_AEDT':'datetime64', 'date_day':'datetime64'})
+    return df_region
+
+
+
+
 # In[15]:
 
+Region = 'United Kingdom'
+df_region = build_df_region(Region)
 
-url = "https://www.arcgis.com/sharing/rest/content/items/e5fd11150d274bebaaf8fe2a7a2bda11/data"
-df = pd.read_excel(url)
-df = df.loc[:,['DateVal','CumCases']]
-FMT = '%Y-%m-%d'
-date = df['DateVal']
-df['data'] = date.map(lambda x : (x - datetime.strptime("2020-01-01", FMT)).days)
+df = df_region.loc[:,['date_day','Confirmed']]
+df.index = df['date_day']
+df = df.sort_index()
+FMT = '%Y-%m-%d %H:%M:%S'
+date = df['date_day']
+df['data'] = date.map(lambda x : (datetime.strptime(str(x), FMT) - datetime.strptime("2020-01-01 00:00:00", FMT)).days  )
 
 #The logistic model
 def logistic_model(x,a,b,c):
@@ -286,7 +327,7 @@ def logistic_model(x,a,b,c):
 #We can use the curve_fit function of scipy library to estimate the parameter values and errors starting from the original data.
 
 x = list(df['data'])
-y = list(df['CumCases'])
+y = list(df['Confirmed'])
 
 fit = curve_fit(logistic_model,x,y,p0=[2,100,20000])
 a = fit[0][0]
@@ -381,12 +422,16 @@ df_england_beds_region['Free General & Acute'][2:].plot(figsize=(50,5), kind='ba
 # # Get the England regions COVID-19 data
 
 # In[17]:
-
-
 #read in the latest UK COVID-19 data for England regions
 # download UK regional cases
-url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
-df_UK = pd.read_csv(url)
+#url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
+excel_url = 'https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx'
+excel_sheet_name = 'UTLAs'
+
+#df_UK = pd.read_csv(url)
+df_UK_timeseries = pd.read_excel(excel_url,sheet_name = excel_sheet_name, header=8)
+df_UK = df_UK_timeseries[[df_UK_timeseries.columns[1], df_UK_timeseries.columns[-1]]]
+df_UK.columns = ['GSS_NM', 'TotalCases']
 df_UK.head()
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon.csv')
@@ -406,14 +451,15 @@ df_UK = df_UK.merge(df_UK_lat_lon, how='outer', left_on=["GSS_NM"], right_on=["G
 
 
 # In[18]:
-
-
-
 tmp_total_cases = []
 # eunsure we have total cases as floats and remove commas to do so
 for item in df_UK['TotalCases']:
     if isinstance(item, str):
         tmp_total_cases.append(float(item.replace(',','')))
+    elif isinstance(item, int):
+        tmp_total_cases.append(float(item))
+    else:
+        print('item type error: ', item)
 df_UK['TotalCases'] = tmp_total_cases
 
 df_UK_tmp = df_UK.copy()
@@ -907,42 +953,6 @@ fig_rate.update_layout(
 
 
 # In[37]:
-
-
-def build_df_region(Region):
-    if Region == 'UK':
-        Region = 'United Kingdom'
-    df_region = pd.DataFrame(time_series_data_confirmed[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
-    if len(df_region.columns) > 1:
-        s = df_region.sum().sort_values(ascending=False, inplace=False)
-        df_region = pd.DataFrame(df_region[s[:1].index[0]].astype(int))
-        df_region.columns = ['Confirmed']
-        df_region_recovered = pd.DataFrame(time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
-        s = df_region_recovered.sum().sort_values(ascending=False, inplace=False)
-        df_region_recovered = pd.DataFrame(df_region_recovered[s[:1].index[0]].astype(int))
-        df_region['Recovered'] = df_region_recovered
-        df_region_deaths = pd.DataFrame(time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
-        s = df_region_deaths.sum().sort_values(ascending=False, inplace=False)
-        df_region_deaths = pd.DataFrame(df_region_deaths[s[:1].index[0]].astype(int))
-        df_region['Deaths'] = df_region_deaths
-    else:
-        df_region.columns = ['Confirmed']
-        df_region['Recovered'] = time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
-        df_region['Deaths'] = time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
-    df_region['New'] = df_region['Confirmed'].astype(int).diff().fillna(0)
-    list_days = []
-    for i in range(1,len(df_region['Confirmed'])+1):
-        list_days.append(df_region['Confirmed'][:i].astype(bool).sum(axis=0))
-    df_region['DayElapsed'] = list_days
-    df_region['date_day'] = df_region.index
-    date_list = []
-    for date_str in df_region['date_day']:
-        date_list.append(datetime.strptime(date_str, '%m/%d/%y'))
-    df_region['Date_last_updated_AEDT'] = date_list
-    df_region['Date_last_updated_AEDT'] = df_region['Date_last_updated_AEDT'] + timedelta(hours=16)
-    df_region=df_region.astype({'Date_last_updated_AEDT':'datetime64', 'date_day':'datetime64'})
-    return df_region
-
 
 # In[38]:
 
