@@ -433,7 +433,7 @@ df_UK_tmp = pd.read_csv(new_csv, error_bad_lines=False)
 latest_date = max(df_UK_tmp['Date'])
 df_UK_latest = df_UK_tmp[df_UK_tmp['Date']== str(datetime.strptime(latest_date,'%Y-%m-%d') - timedelta(days=1))[0:10]]
 df_UK = df_UK_latest[['Area', 'TotalCases']]
-
+df_UK.columns = ['GSS_NM', 'TotalCases']
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon_all.csv')
 del df_UK_lat_lon['Unnamed: 0']
