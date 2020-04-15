@@ -424,20 +424,21 @@ df_england_beds_region['Free General & Acute'][2:].plot(figsize=(50,5), kind='ba
 # In[17]:
 #read in the latest UK COVID-19 data for England regions
 # download UK regional cases
-#url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
+url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
 excel_url = 'https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx'
+new_csv = 'https://raw.githubusercontent.com/tomwhite/covid-19-uk-data/master/data/covid-19-cases-uk.csv'
 excel_sheet_name = 'UTLAs'
 
-#df_UK = pd.read_csv(url)
-df_UK_timeseries = pd.read_excel(excel_url,sheet_name = excel_sheet_name, header=8)
-df_UK = df_UK_timeseries[[df_UK_timeseries.columns[1], df_UK_timeseries.columns[-1]]]
-df_UK.columns = ['GSS_NM', 'TotalCases']
-df_UK = df_UK[:-1] # remove England region from end
+df_UK_tmp = pd.read_csv(new_csv, error_bad_lines=False)
+latest_date = max(df_UK_tmp['Date'])
+df_UK_latest = df_UK_tmp[df_UK_tmp['Date']== str(datetime.strptime(latest_date,'%Y-%m-%d') - timedelta(days=1))[0:10]]
+df_UK = df_UK_latest[['Area', 'TotalCases']]
 
 
-df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon.csv')
+df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon_all.csv')
 del df_UK_lat_lon['Unnamed: 0']
 df_UK = df_UK.merge(df_UK_lat_lon, how='outer', left_on=["GSS_NM"], right_on=["GSS_NM"])
+df_UK = df_UK.dropna()
 
 #from geopy.geocoders import Nominatim
 #from geopy.exc import GeocoderTimedOut
@@ -459,12 +460,14 @@ for item in df_UK['TotalCases']:
         tmp_total_cases.append(float(item.replace(',','')))
     elif isinstance(item, int):
         tmp_total_cases.append(float(item))
+    elif isinstance(item, float):
+        tmp_total_cases.append(float(item))
     else:
+        tmp_total_cases.append(0)
         print('item type error: ', item)
 df_UK['TotalCases'] = tmp_total_cases
 
 df_UK_tmp = df_UK.copy()
-
 
 # # Match the UK local data to the NHS beds data for England NHS trusts
 
@@ -521,9 +524,14 @@ hospital_lon = []
 for index, row in df_UK.iterrows():
     v = {'lat': row['lat'], 'lon': row['lon']}
     match = closest(list(merged_df[['lat','lon']].T.to_dict().values()),v)
-    hospital_lat.append(match['lat'])
-    hospital_lon.append(match['lon'])
-
+    print(distance(v['lat'],v['lon'],match['lat'],match['lon']))
+    if distance(v['lat'],v['lon'],match['lat'],match['lon']) < 50: #ensures the match is sensible
+        hospital_lat.append(match['lat'])
+        hospital_lon.append(match['lon'])
+    else:
+        hospital_lat.append(np.nan)
+        hospital_lon.append(np.nan)
+    
 df_UK['hospital_lat'] = hospital_lat
 df_UK['hospital_lon'] = hospital_lon
 
