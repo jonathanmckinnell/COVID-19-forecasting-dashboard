@@ -425,8 +425,11 @@ df_england_beds[['Year','Total .2', 'General & Acute.2']].plot()
 #read in the free beds via hospital
 df_england_beds_region = pd.read_excel("https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2019/11/Beds-Open-Overnight-Web_File-Final-Q1-201920.xlsx", header=14)
 df_england_beds_region['Free General & Acute'] = df_england_beds_region['General & Acute'] - df_england_beds_region['General & Acute.1']
-df_england_beds_region.index = df_england_beds_region['Org Name']
+#20200503#df_england_beds_region.index = df_england_beds_region['Org Name']
 df_england_beds_region['Free General & Acute'][2:].plot(figsize=(50,5), kind='bar', ylim=(0,300))
+df_england_beds_region.dropna(how='all',inplace=True)
+df_england_beds_region=df_england_beds_region[df_england_beds_region['Org Name'] != 'England']
+df_england_beds_region=df_england_beds_region.reset_index(drop=True)
 
 
 # # Get the England regions COVID-19 data
@@ -434,16 +437,65 @@ df_england_beds_region['Free General & Acute'][2:].plot(figsize=(50,5), kind='ba
 # In[17]:
 #read in the latest UK COVID-19 data for England regions
 # download UK regional cases
-url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
-excel_url = 'https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx'
+##url = "https://www.arcgis.com/sharing/rest/content/items/b684319181f94875a6879bbc833ca3a6/data"
+##excel_url = 'https://fingertips.phe.org.uk/documents/Historic%20COVID-19%20Dashboard%20Data.xlsx'
 new_csv = 'https://raw.githubusercontent.com/tomwhite/covid-19-uk-data/master/data/covid-19-cases-uk.csv'
+##new_csv='../covid-19-cases-uk.csv'
+url="https://c19downloads.azureedge.net/downloads/csv/coronavirus-cases_latest.csv"
 excel_sheet_name = 'UTLAs'
 
+## Get latest data from new_csv
 df_UK_tmp = pd.read_csv(new_csv, error_bad_lines=False)
 latest_date = max(df_UK_tmp['Date'])
 df_UK_latest = df_UK_tmp[df_UK_tmp['Date']== str(datetime.strptime(latest_date,'%Y-%m-%d') - timedelta(days=1))[0:10]]
 df_UK = df_UK_latest[['Area', 'TotalCases']]
 df_UK.columns = ['GSS_NM', 'TotalCases']
+
+## Get series data (not quite up to date)
+df_UK_tmp = pd.read_csv(url, error_bad_lines=False)
+## Should probably pick out 'Upper tier local authority' only?
+df_UK_tmp.drop(axis=1,labels='Area type',inplace=True)
+df_UK_tmp.drop_duplicates(inplace=True)
+
+df_UK_series = df_UK_tmp[['Area name','Area code', 'Specimen date', 'Daily lab-confirmed cases', 'Cumulative lab-confirmed cases']]
+df_UK_series.columns = ['Area','GSS_NM','Date','NewCases','TotalCases']
+df_UK_series.NewCases.fillna(value=0.0,inplace=True)
+df_UK_series.TotalCases.fillna(value=0.0,inplace=True)
+
+##dates_append = pd.DataFrame(columns=['day_date'])
+dates_append = []
+for index, _ in df_UK_series.iterrows():
+    date=df_UK_series['Date'][index]
+    dates_append.append(datetime.strptime(date, '%Y-%m-%d'))
+df_UK_series['day_date']=dates_append
+##df_UK_series.merge(dates_append,how='inner',left_index=True,right_index=True)
+#2020/05/01#print("df_UK_series")
+#2020/05/01#print(df_UK_series)
+
+###Scotland cases by region
+excel_url="https://www.gov.scot/binaries/content/documents/govscot/publications/statistics/2020/04/trends-in-number-of-people-in-hospital-with-confirmed-or-suspected-covid-19/documents/covid-19-data-by-nhs-board/covid-19-data-by-nhs-board/govscot%3Adocument/COVID-19%2Bdata%2Bby%2BNHS%2BBoard-300420-1.xlsx"
+###Sheet 3 "Table 1 - Cumulative cases"
+df_UK_tmp=pd.read_excel(excel_url, header=2, sheet_name='Table 1 - Cumulative cases')
+df_UK_tmp.replace(to_replace='*',value=0,inplace=True)
+#2020/05/10#print('df_UK_tmp')
+#2020/05/10#print(df_UK_tmp)
+dates_append = []
+for index, _ in df_UK_tmp.iterrows():
+    date=df_UK_tmp['Date'][index]
+    datestr=date.strftime('%Y-%m-%d')
+    dates_append.append(datestr)
+df_UK_tmp.columns=['Date','Ayrshire and Arran','Borders','Dumfries and Galloway','Fife','Forth Valley','Grampian','Greater Glasgow and Clyde','Highland','Lanarkshire','Lothian','Orkney','Shetland','Tayside','Western Isles','Scotland']
+#2020/05/10#print('df_UK_tmp again')
+#2020/05/10#print(df_UK_tmp)
+df_region_tmp=df_UK_tmp[['Date','Ayrshire and Arran']]
+df_region_tmp.columns=['Date','TotalCases']
+df_region_tmp['Area']='Ayrshire and Arran'
+df_region_tmp['GSS_NM']='S08000015'
+df_region_tmp['Type']='Region'
+df_region_tmp['NewCases']=0.0
+print('Ayrshire and Arran')
+print(df_region_tmp)
+df_UK_series=df_UK_series.append(df_region_tmp,ignore_index=True)
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon_all.csv')
 del df_UK_lat_lon['Unnamed: 0']
@@ -486,35 +538,28 @@ df_UK_tmp = df_UK.copy()
 
 import pgeocode
 #match the local data to the beds regions
-df_nhs_trusts = pd.read_csv('https://nhsenglandfilestore.s3.amazonaws.com/ods/etr.csv', header=None)
+#20200501#df_nhs_trusts = pd.read_csv('trusts_lat_lon.csv', header=0)
+#20200503#df_nhs_trusts = pd.read_csv('https://nhsenglandfilestore.s3.amazonaws.com/ods/etr.csv', header=None)
+df_nhs_trusts = pd.read_csv('../trusts_lat_lon_unitary.csv',header=0)
+
 matches = []
 
 for org_name in df_england_beds_region['Org Name']: 
-    for trust in df_nhs_trusts[1]:
+    for trust in df_nhs_trusts['Org Name']:
         if trust == org_name:
-            print(trust, ' matches ', org_name)
             matches.append(trust + ' matches ' + org_name)
 
 df_england_beds_region.reset_index(drop=True)
 
-merged_df = df_england_beds_region.reset_index(drop=True).merge(df_nhs_trusts[[1,9]], how='outer', left_on=["Org Name"], right_on=[1])
+#20200503#merged_df = df_england_beds_region.reset_index(drop=True).merge(df_nhs_trusts[['Org Name','Postcode','lat','lon','uni_code','Unitary Authority','uni_lat','uni_lon']], how='inner', left_on=["Org Name"], right_on=["Org Name"])
+merged_df = df_nhs_trusts.reset_index(drop=True).merge(df_england_beds_region[['Org Name',"Total ", "General & Acute",  "Total .1", "General & Acute.1",'Free General & Acute']], how='outer', left_on=["Org Name"], right_on=["Org Name"])
+
+#match the UK death data to the trusts
+###df_UK_deaths = pd.read_excel('https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2020/04/COVID-19-total-announced-deaths-20-April-2020.xlsx', sheet_name='COVID19 total deaths by trust', header=15)
+
 
 nomi = pgeocode.Nominatim('gb')
 
-lat_list = []
-lon_list = []
-for item in merged_df[9]:
-    item = str(item)
-    if item == "NaN" or item == "nan":
-        lat_list.append(0)
-        lon_list.append(0)
-    else:
-        lat = nomi.query_postal_code(item).latitude
-        lon = nomi.query_postal_code(item).longitude
-        lat_list.append(float(lat.item()))
-        lon_list.append(float(lon.item()))
-merged_df['lat'] = lat_list
-merged_df['lon'] = lon_list
 
 #find the closest lat and lon to that trust from the geospatial data and join the datasets to the beds dataset
 
@@ -528,30 +573,40 @@ def distance(lat1, lon1, lat2, lon2):
 def closest(data, v):
     return min(data, key=lambda p: distance(v['lat'],v['lon'],p['lat'],p['lon']))
 
-hospital_lat = []
-hospital_lon = []
+#20200503#hospital_lat = []
+#20200503#hospital_lon = []
 
-for index, row in df_UK.iterrows():
-    v = {'lat': row['lat'], 'lon': row['lon']}
-    match = closest(list(merged_df[['lat','lon']].T.to_dict().values()),v)
-    print(distance(v['lat'],v['lon'],match['lat'],match['lon']))
-    if distance(v['lat'],v['lon'],match['lat'],match['lon']) < 50: #ensures the match is sensible
-        hospital_lat.append(match['lat'])
-        hospital_lon.append(match['lon'])
-    else:
-        hospital_lat.append(np.nan)
-        hospital_lon.append(np.nan)
+#20200503#for index, row in df_UK.iterrows():
+    #20200503#v = {'lat': row['lat'], 'lon': row['lon']}
+    #20200503#match = closest(list(merged_df[['lat','lon']].T.to_dict().values()),v)
+    #20200420#print(distance(v['lat'],v['lon'],match['lat'],match['lon']))
+    #20200503#if distance(v['lat'],v['lon'],match['lat'],match['lon']) < 50: #ensures the match is sensible
+        #20200503#hospital_lat.append(match['lat'])
+        #20200503#hospital_lon.append(match['lon'])
+    #20200503#else:
+        #20200503#hospital_lat.append(np.nan)
+        #20200503#hospital_lon.append(np.nan)
     
-df_UK['hospital_lat'] = hospital_lat
-df_UK['hospital_lon'] = hospital_lon
+#20200503#df_UK['hospital_lat'] = hospital_lat
+#20200503#df_UK['hospital_lon'] = hospital_lon
 
-df_UK_merged = df_UK.merge(merged_df[["Org Name", "Total ", "General & Acute",  "Total .1", "General & Acute.1","lat","lon"]], how='inner', left_on=["hospital_lon", "hospital_lat"], right_on=["lon","lat"])
+#20200503#df_UK_merged = df_UK.merge(merged_df[["Org Name", "Total ", "General & Acute",  "Total .1", "General & Acute.1","lat","lon"]], how='inner', left_on=["hospital_lon", "hospital_lat"], right_on=["lon","lat"])
+#20200503#df_UK_merged = df_UK.merge(merged_df[["Org Name", "Total ", "General & Acute",  "Total .1", "General & Acute.1","Unitary Authority","uni_lat","uni_lon"]], how='inner', left_on=["GSS_NM"], right_on=["Unitary Authority"])
+df_UK_merged = merged_df.merge(df_UK, how='inner', left_on=["Unitary Authority"], right_on=["GSS_NM"])
 df_UK_merged['Free Beds Without COVID-19'] = df_UK_merged['Total '] - df_UK_merged['Total .1']
 
-Free_Beds_INCLUDING_COVID = []
-counts_list = df_UK_merged.groupby(by=['GSS_NM'])['GSS_NM'].count()
+#Same as above for deaths by trust
+#20200501#merged_UK_deaths = df_UK_deaths.reset_index(drop=True).merge(df_nhs_trusts[["Org Name","Postcode","lat","lon"]], how='inner', left_on=["Org Name"], right_on=["Org Name"])
 
-for item in df_UK_merged['GSS_NM']:
+#20200501#df_UK_merged_deaths = df_UK.merge(merged_UK_deaths[["Date", "Org Name", "Deaths","lat","lon"]], how='inner', left_on=["hospital_lon", "hospital_lat"], right_on=["lon","lat"])
+
+Free_Beds_INCLUDING_COVID = []
+counts_list = df_UK_merged.groupby(by=['Unitary Authority'])['Unitary Authority'].count()
+
+print("Grouping free beds")
+for item in df_UK_merged['Unitary Authority']:
+    print(item)
+    print(counts_list[item])
     Free_Beds_INCLUDING_COVID.append(counts_list[item])
 
 df_UK_merged['count'] = Free_Beds_INCLUDING_COVID
@@ -635,6 +690,8 @@ UKTable_append['Deaths'] = 0
 UKTable_append['Remaining'] = 0
 del UKTable_append['id']
 UKTable_append
+print(UKTable_append['Country/Region'])
+print(UKTable_append['Deaths'][0])
 
 
 # In[27]:
@@ -1000,6 +1057,10 @@ def build_df_region_UK(Locality):
     #if Locality == 'United Kingdom':
     #    Locality = 'Derby'
     df_region = pd.DataFrame(time_series_data_confirmed[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+    print("build_df_region_UK")
+    print("df_region")
+    print(df_region)
+    print(len(df_region.columns))
     if len(df_region.columns) > 1:
         s = df_region.sum().sort_values(ascending=False, inplace=False)
         df_region = pd.DataFrame(df_region[s[:1].index[0]].astype(int))
@@ -1012,6 +1073,8 @@ def build_df_region_UK(Locality):
         s = df_region_deaths.sum().sort_values(ascending=False, inplace=False)
         df_region_deaths = pd.DataFrame(df_region_deaths[s[:1].index[0]].astype(int))
         df_region['Deaths'] = df_region_deaths
+        print("df_region filled")
+        print(df_region)
     else:
         df_region.columns = ['Confirmed']
         df_region['Recovered'] = time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
@@ -1032,7 +1095,11 @@ def build_df_region_UK(Locality):
     
     if Locality != 'United Kingdom':
         percentage_locality = df_UK[df_UK['GSS_NM']==Locality]['TotalCases']/df_UK[:]['TotalCases'].sum()
-        df_region[['Confirmed','Recovered','Deaths','New']] = (float(percentage_locality) * df_region[['Confirmed','Recovered','Deaths','New']])[['Confirmed','Recovered','Deaths','New']].astype(int)
+        df_region[['Confirmed','Recovered','New']] = (float(percentage_locality) * df_region[['Confirmed','Recovered','New']])[['Confirmed','Recovered','New']].astype(int)
+        print("Locality")
+        print(Locality)
+        print("df_region")
+        print(df_region)
     # only allow real data values
     count = 0
     for bool_val in df_region['Confirmed']>0:
@@ -1100,12 +1167,21 @@ df_region
 ###UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']].sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).copy()
 ###UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']].fillna(0).astype(int)
 
-Locality = 'Derby'
+Locality = 'Ayrshire and Arran'
 if Locality != 'United Kingdom':
+####for ukregion in df_UK['GSS_NM']:
+    print("Locality not United Kingdom")
+    print("Locality:")
+    print(Locality)
+    print("Locality cases:")
+    print(df_UK[df_UK['GSS_NM']==Locality]['TotalCases'])
+    print(df_UK[df_UK['GSS_NM']==Locality]['TotalCases'].to_string())
+    print("UK total:")
+    print(df_UK[:]['TotalCases'].sum())
     percentage_locality = df_UK[df_UK['GSS_NM']==Locality]['TotalCases']/df_UK[:]['TotalCases'].sum()
     print(percentage_locality)
-    #print(df_region[['Confirmed','Recovered','Deaths','New']])
-    df_region[['Confirmed','Recovered','Deaths','New']] = (float(percentage_locality) * df_region[['Confirmed','Recovered','Deaths','New']])[['Confirmed','Recovered','Deaths','New']].astype(int)
+    print(df_region[['Confirmed','Recovered','Deaths','New']])
+    #20200430#df_region[['Confirmed','Recovered','Deaths','New']] = (float(percentage_locality) * df_region[['Confirmed','Recovered','Deaths','New']])[['Confirmed','Recovered','Deaths','New']].astype(int)
 
 # In[40]:
 
@@ -1116,12 +1192,14 @@ df_region
 # In[41]:
 
 
-UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','lat_x', 'lon_x',]].sort_values(by=['GSS_NM']).copy()
+UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','uni_lat', 'uni_lon',]].sort_values(by=['GSS_NM']).copy()
 UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
-UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "lat_x": "lat", "lon_x": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
+UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "uni_lat": "lat", "uni_lon": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
 # Set row ids pass to selected_row_ids
 UKTable['id'] = UKTable['Country/Region']
 UKTable.set_index('id', inplace=True, drop=False)
+print("UKTable after merge")
+print(UKTable)
 
 # In[42]:
 
@@ -1156,7 +1234,7 @@ fig.add_trace(go.Scatter(x=df_region['date_day'],
                          #marker=dict(size=4, color='#f4f4f2',
                          #            line=dict(width=1,color='#921113')),
                          text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
-                         hovertext=['{} Confirmed<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['Confirmed']],
+                         hovertext=['{} confirmed<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['Confirmed']],
                          hovertemplate='<b>%{text}</b><br>'+
                                                  '%{hovertext}'+
                                                  '<extra></extra>'),
@@ -1576,10 +1654,11 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                         ]),
                                         dcc.Tab(label='Australia',
                                                 className='custom-tab',
+                                                value='tab-2',
                                                 selected_className='custom-tab--selected',
                                                 children=[
                                             dash_table.DataTable(
-                                                #id='datatable-interact-location-aus',
+                                                id='datatable-interact-location-aus',
                                                 # Don't show coordinates
                                                 columns=[{"name": i, "id": i} for i in AUSTable.columns[0:5]],
                                                 # But still store coordinates in the table for interactivity
@@ -1614,7 +1693,7 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                         ]),
                                         dcc.Tab(label='UK', 
                                                 className='custom-tab',
-                                                value='tab-2',
+                                                value='tab-3',
                                                 selected_className='custom-tab--selected',
                                                 children=[
                                             dash_table.DataTable(
@@ -1660,10 +1739,12 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                                         ]),
                                         dcc.Tab(label='Canada', 
                                                 className='custom-tab',
+                                                value='tab-4',
                                                 selected_className='custom-tab--selected',
                                                 children=[
                                             dash_table.DataTable(
                                                 
+                                                id='datatable-interact-location-ca',
                                                 # Don't show coordinates
                                                 columns=[{"name": i, "id": i} for i in CANTable.columns[0:5]],
                                                 # But still store coordinates in the table for interactivity
@@ -2112,6 +2193,8 @@ def update_lineplot(derived_virtual_selected_rows, selected_row_ids):
 
 def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
     print('Inside update_lineplot_uk ', derived_virtual_selected_rows, selected_row_ids)
+    #20200430#selected_row_ids = None
+    #20200430#derived_virtual_selected_rows = None
 
     if selected_row_ids is None:
         selected_row_ids = []
@@ -2177,16 +2260,17 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
     #fig3 = go.Figure()
 
     # Add trace to the figure
-    fig3.add_trace(go.Scatter(x=df_region['date_day'], 
-                             y=df_region['Confirmed'],
+    fig3.add_trace(go.Scatter(x=df_UK_series[df_UK_series['Area']==Region]['day_date'], 
+                             y=df_UK_series[df_UK_series['Area']==Region]['TotalCases'],
                              mode='lines+markers',
                              #line_shape='spline',
-                             name='UK Confirmed cases scaled to region',
+                             name='Region Confirmed cases',
                              line=dict(color='#d7191c', width=4),
                              marker=dict(size=4, color='#d7191c',
                                          line=dict(width=4,color='#d7191c')),
-                             text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
-                             hovertext=['{} Confirmed<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['Confirmed']],
+                             #20200430#text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_UK_series['day_date']],
+                             text=[datetime.strftime(d, '%b %d %Y') for d in df_UK_series[df_UK_series['Area']==Region]['day_date']],
+                             hovertext=['{} Confirmed<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_UK_series[df_UK_series['Area']==Region]['TotalCases']],
                              hovertemplate='<b>%{text}</b><br>'+
                                                      '%{hovertext}'+
                                                      '<extra></extra>'),
@@ -2225,33 +2309,33 @@ def update_lineplot_uk(derived_virtual_selected_rows, selected_row_ids):
                                                      '<extra></extra>'),
                              secondary_y=False,
                  )
-    fig3.add_trace(go.Scatter(x=df_region['date_day'], 
-                             y=df_region['Deaths'],
-                             mode='lines+markers',
-                             #line_shape='spline',
-                             name='UK Death cases scaled to region',
-                             line=dict(color='#626262', width=2),
-                             #marker=dict(size=4, color='#f4f4f2',
-                             #            line=dict(width=1,color='#626262')),
-                             text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
-                             hovertext=['{} Deaths<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['Deaths']],
-                             hovertemplate='<b>%{text}</b><br>'+
-                                                     '%{hovertext}'+
-                                                     '<extra></extra>'),
-                             secondary_y=False,
-                 )
+#20200430#    fig3.add_trace(go.Scatter(x=df_region['date_day'], 
+#20200430#                             y=df_region['Deaths'],
+#20200430#                             mode='lines+markers',
+#20200430#                             #line_shape='spline',
+#20200430#                             name='UK Death cases scaled to region',
+#20200430#                             line=dict(color='#626262', width=2),
+#20200430#                             #marker=dict(size=4, color='#f4f4f2',
+#20200430#                             #            line=dict(width=1,color='#626262')),
+#20200430#                             text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
+#20200430#                             hovertext=['{} Deaths<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['Deaths']],
+#20200430#                             hovertemplate='<b>%{text}</b><br>'+
+#20200430#                                                     '%{hovertext}'+
+#20200430#                                                     '<extra></extra>'),
+#20200430#                             secondary_y=False,
+#20200430#                 )
 
-    fig3.add_trace(go.Bar(x=df_region['date_day'], 
-                         y=df_region['New'],
+    fig3.add_trace(go.Bar(x=df_UK_series[df_UK_series['Area']==Region]['day_date'], 
+                             y=df_UK_series[df_UK_series['Area']==Region]['NewCases'],
                              #mode='lines+markers',
                              #line_shape='spline',
-                         name='UK Daily New Cases scaled to region',
+                         name='Region Daily New Cases',
                          marker_color='#626262',
                          opacity = .3,
                              #marker=dict(size=4, color='#f4f4f2',
                              #            line=dict(width=1,color='#626262')),
-                         text=[datetime.strftime(d, '%b %d %Y AEDT') for d in df_region['date_day']],
-                         hovertext=['{} New<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_region['New']],
+                         text=[datetime.strftime(d, '%b %d %Y') for d in df_UK_series[df_UK_series['Area']==Region]['day_date']],
+                         hovertext=['{} New<br>{:,d} cases<br>'.format(Region, int(i)) for i in df_UK_series[df_UK_series['Area']==Region]['NewCases']],
                          hovertemplate='<b>%{text}</b><br>'+
                                                   '%{hovertext}'+
                                                   '<extra></extra>'
