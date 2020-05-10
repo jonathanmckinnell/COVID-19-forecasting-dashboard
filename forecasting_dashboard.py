@@ -1192,9 +1192,11 @@ df_region
 # In[41]:
 
 
-UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','uni_lat', 'uni_lon',]].sort_values(by=['GSS_NM']).copy()
-UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
-UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "uni_lat": "lat", "uni_lon": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
+#20200510#UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19','count','uni_lat', 'uni_lon',]].sort_values(by=['GSS_NM']).copy()
+UKTable = df_UK_merged[['GSS_NM','Org Name', 'TotalCases', 'count','uni_lat', 'uni_lon',]].sort_values(by=['GSS_NM']).copy()
+#20200510#UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']] = UKTable[['Free Beds INCLUDING COVID-19', 'Predicted Free Beds INCLUDING COVID-19 in 1 WEEK','Free Beds Without COVID-19']].fillna(0).astype(int)
+#20200510#UKTable.rename(columns={"Free Beds Without COVID-19" : "Q1 2019 Free Beds","Free Beds INCLUDING COVID-19" : "Q1 2019 Free Bed data with COVID-19 active cases applied at 8.2% Hospitalisation", "Predicted Free Beds INCLUDING COVID-19 in 1 WEEK":"Predicted Free Beds from Q1 2019 data with forecasted COVID-19 in One Week applied at 8.2% Hospitalisation", "uni_lat": "lat", "uni_lon": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
+UKTable.rename(columns={"uni_lat": "lat", "uni_lon": "lon", "count": "Number of Trusts in Region","GSS_NM": "Country/Region","Org Name": "Trust Name"}, inplace=True)
 # Set row ids pass to selected_row_ids
 UKTable['id'] = UKTable['Country/Region']
 UKTable.set_index('id', inplace=True, drop=False)
@@ -1486,11 +1488,8 @@ app.layout = html.Div(style={'backgroundColor':'#f4f4f2'},
                     an outbreak of “pneumonia of unknown cause” detected in Wuhan City, Hubei Province, China – the \
                     seventh-largest city in China with 11 million residents. As of {}, there are over {:,d} cases \
                     of COVID-19 confirmed globally. This dash board is developed to visualise and track the recent reported \
-                    cases on an hourly timescale. New feature added - click on UK tab in Cases by Country and you can see the Free Bed forecasting for NHS Trusts in England. \
-                    For the UK free bed forecasting NHS Q1 2019 data was used as a baseline before forecasting the number of COVID-19 cases from the current d ata in the UK \
-                    then trying to predict the current number of free beds in England NHS trusts \
-                    and then forecast the current number of beds in 1 week based on an Imperial College study of an estimated 8.2% hospitalisation rate. \
-                    Important note: Please note that the case forecasting model and the bed forecasting model are experimental and not yet validated (as cases have not yet arrived since the model is being developed as the pandemic unfolds). The model is only as good as its assumptions and starting data both of which are likely to have limitations, especially this early in the pandemic and therefore it should not be used for clinical decision making. \
+                    cases on a daily timescale. \
+                    Important note: Please note that the case forecasting model is experimental and not yet validated (as cases have not yet arrived since the model is being developed as the pandemic unfolds). The model is only as good as its assumptions and starting data both of which are likely to have limitations, especially this early in the pandemic and therefore it should not be used for clinical decision making. \
                     Open Source code available in python: https://github.com/jonathanmckinnell/COVID-19-forecasting-dashboard".format(latestDate, int(confirmedCases)),
                 ),
                 html.P(
