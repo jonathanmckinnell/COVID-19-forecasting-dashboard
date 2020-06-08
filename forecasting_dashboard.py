@@ -279,18 +279,18 @@ def build_df_region(Region):
         s = df_region.sum().sort_values(ascending=False, inplace=False)
         df_region = pd.DataFrame(df_region[s[:1].index[0]].astype(int))
         df_region.columns = ['Confirmed']
-        df_region_recovered = pd.DataFrame(time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+        df_region_recovered = pd.DataFrame(time_series_data_recovered[time_series_data_recovered['Country/Region'] == Region].transpose()[4:])
         s = df_region_recovered.sum().sort_values(ascending=False, inplace=False)
         df_region_recovered = pd.DataFrame(df_region_recovered[s[:1].index[0]].astype(int))
         df_region['Recovered'] = df_region_recovered
-        df_region_deaths = pd.DataFrame(time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:])
+        df_region_deaths = pd.DataFrame(time_series_data_deaths[time_series_data_deaths['Country/Region'] == Region].transpose()[4:])
         s = df_region_deaths.sum().sort_values(ascending=False, inplace=False)
         df_region_deaths = pd.DataFrame(df_region_deaths[s[:1].index[0]].astype(int))
         df_region['Deaths'] = df_region_deaths
     else:
         df_region.columns = ['Confirmed']
-        df_region['Recovered'] = time_series_data_recovered[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
-        df_region['Deaths'] = time_series_data_deaths[time_series_data_confirmed['Country/Region'] == Region].transpose()[4:]
+        df_region['Recovered'] = time_series_data_recovered[time_series_data_recovered['Country/Region'] == Region].transpose()[4:]
+        df_region['Deaths'] = time_series_data_deaths[time_series_data_deaths['Country/Region'] == Region].transpose()[4:]
     df_region['New'] = df_region['Confirmed'].astype(int).diff().fillna(0)
     list_days = []
     for i in range(1,len(df_region['Confirmed'])+1):
@@ -351,7 +351,7 @@ def exponential_model(x,a,b,c):
     return a*np.exp(b*(x-c))
 
 
-exp_fit = curve_fit(exponential_model,x,y,p0=[1,1,1],maxfev=2000)
+exp_fit = curve_fit(exponential_model,x,y,p0=[1,1,1],maxfev=5000)
 base = datetime.strptime(str(date[-1:].values[0]).replace("T"," ")[:19],"%Y-%m-%d %H:%M:%S")
 dates = []
 
@@ -474,28 +474,31 @@ df_UK_series['day_date']=dates_append
 
 ###Scotland cases by region
 excel_url="https://www.gov.scot/binaries/content/documents/govscot/publications/statistics/2020/04/trends-in-number-of-people-in-hospital-with-confirmed-or-suspected-covid-19/documents/covid-19-data-by-nhs-board/covid-19-data-by-nhs-board/govscot%3Adocument/COVID-19%2Bdata%2Bby%2BNHS%2BBoard-300420-1.xlsx"
+excel_url="https://www.gov.scot/binaries/content/documents/govscot/publications/statistics/2020/04/coronavirus-covid-19-trends-in-daily-data/documents/covid-19-data-by-nhs-board/covid-19-data-by-nhs-board/govscot%3Adocument/COVID-19%2Bdata%2Bby%2BNHS%2BBoard%2B110520.xlsx"
+## Need to update the date (also what if it is moved?)
 ###Sheet 3 "Table 1 - Cumulative cases"
-df_UK_tmp=pd.read_excel(excel_url, header=2, sheet_name='Table 1 - Cumulative cases')
-df_UK_tmp.replace(to_replace='*',value=0,inplace=True)
+# 2020/05/12 This spreadsheet no longer exists
+#20200512#df_UK_tmp=pd.read_excel(excel_url, header=2, sheet_name='Table 1 - Cumulative cases')
+#20200512#df_UK_tmp.replace(to_replace='*',value=0,inplace=True)
 #2020/05/10#print('df_UK_tmp')
 #2020/05/10#print(df_UK_tmp)
-dates_append = []
-for index, _ in df_UK_tmp.iterrows():
-    date=df_UK_tmp['Date'][index]
-    datestr=date.strftime('%Y-%m-%d')
-    dates_append.append(datestr)
-df_UK_tmp.columns=['Date','Ayrshire and Arran','Borders','Dumfries and Galloway','Fife','Forth Valley','Grampian','Greater Glasgow and Clyde','Highland','Lanarkshire','Lothian','Orkney','Shetland','Tayside','Western Isles','Scotland']
+#20200512#dates_append = []
+#20200512#for index, _ in df_UK_tmp.iterrows():
+    #20200512#date=df_UK_tmp['Date'][index]
+    #20200512#datestr=date.strftime('%Y-%m-%d')
+    #20200512#dates_append.append(datestr)
+#20200512#df_UK_tmp.columns=['Date','Ayrshire and Arran','Borders','Dumfries and Galloway','Fife','Forth Valley','Grampian','Greater Glasgow and Clyde','Highland','Lanarkshire','Lothian','Orkney','Shetland','Tayside','Western Isles','Scotland']
 #2020/05/10#print('df_UK_tmp again')
 #2020/05/10#print(df_UK_tmp)
-df_region_tmp=df_UK_tmp[['Date','Ayrshire and Arran']]
-df_region_tmp.columns=['Date','TotalCases']
-df_region_tmp['Area']='Ayrshire and Arran'
-df_region_tmp['GSS_NM']='S08000015'
-df_region_tmp['Type']='Region'
-df_region_tmp['NewCases']=0.0
-print('Ayrshire and Arran')
-print(df_region_tmp)
-df_UK_series=df_UK_series.append(df_region_tmp,ignore_index=True)
+#20200512#df_region_tmp=df_UK_tmp[['Date','Ayrshire and Arran']]
+#20200512#df_region_tmp.columns=['Date','TotalCases']
+#20200512#df_region_tmp['Area']='Ayrshire and Arran'
+#20200512#df_region_tmp['GSS_NM']='S08000015'
+#20200512#df_region_tmp['Type']='Region'
+#20200512#df_region_tmp['NewCases']=0.0
+#20200512#print('Ayrshire and Arran')
+#20200512#print(df_region_tmp)
+#20200512#df_UK_series=df_UK_series.append(df_region_tmp,ignore_index=True)
 
 df_UK_lat_lon = pd.read_csv('../df_UK_lat_lon_all.csv')
 del df_UK_lat_lon['Unnamed: 0']
@@ -632,12 +635,12 @@ df_UK_merged.index = df_UK_merged['Org Name']
 # In[20]:
 
 
-minimum = min(df_UK_merged['Free Beds INCLUDING COVID-19'][2:].fillna(0))
-maximum = max(df_UK_merged['Free Beds INCLUDING COVID-19'][2:].fillna(0))
+#20200516#minimum = min(df_UK_merged['Free Beds INCLUDING COVID-19'][2:].fillna(0))
+#20200516#maximum = max(df_UK_merged['Free Beds INCLUDING COVID-19'][2:].fillna(0))
 
 #Plot a chart representing the current hospital bed vacancy by trust by incrementing over and above 2019 Q1 total free beds with COVID-19 estimated current cases requiring hospitalisation in the UK
-df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])['Free Beds INCLUDING COVID-19'].dropna()[2:].plot(figsize=(100,50), kind='bar', ylim=(minimum,maximum),color=(df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])['Free Beds INCLUDING COVID-19'][2:].dropna() > 0).map({True: 'g',False: 'r'}),title="Estimated current number of free beds after COVID-19 by hospital trust in the UK",fontsize = 30)
-df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])
+#20200516#df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])['Free Beds INCLUDING COVID-19'].dropna()[2:].plot(figsize=(100,50), kind='bar', ylim=(minimum,maximum),color=(df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])['Free Beds INCLUDING COVID-19'][2:].dropna() > 0).map({True: 'g',False: 'r'}),title="Estimated current number of free beds after COVID-19 by hospital trust in the UK",fontsize = 30)
+#20200516#df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])
 
 
 # # Print out and plot the forecasted free beds in 1 WEEK for NHS Enland Trusts
@@ -646,13 +649,13 @@ df_UK_merged.sort_values(by=['Free Beds INCLUDING COVID-19'])
 
 
 #Plot a chart representing the NEXT WEEKS hospital bed vacancy by trust by incrementing over and above 2019 Q1 total free beds with COVID-19 estimated cases 1 WEEK FROM TODAY requiring hospitalisation in the UK
-df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'] = df_UK_merged['Free Beds Without COVID-19'] - (percentage_hospital * growth_factor_in_a_week * df_UK_merged['TotalCases']/df_UK_merged['count'])
+#20200516#df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'] = df_UK_merged['Free Beds Without COVID-19'] - (percentage_hospital * growth_factor_in_a_week * df_UK_merged['TotalCases']/df_UK_merged['count'])
 
-minimum = min(df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].fillna(0))
-maximum = max(df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].fillna(0))
+#20200516#minimum = min(df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].fillna(0))
+#20200516#maximum = max(df_UK_merged['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].fillna(0))
 
-df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'])['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'].dropna()[2:].plot(figsize=(100,50), kind='bar', ylim=(minimum,maximum),color=(df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'])['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].dropna() > 0).map({True: 'g',False: 'r'}),title="Estimated current number of free beds after COVID-19 by hospital trust in the UK",fontsize = 30)
-df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).dropna()
+#20200516#df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'])['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'].dropna()[2:].plot(figsize=(100,50), kind='bar', ylim=(minimum,maximum),color=(df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'])['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK'][2:].dropna() > 0).map({True: 'g',False: 'r'}),title="Estimated current number of free beds after COVID-19 by hospital trust in the UK",fontsize = 30)
+#20200516#df_UK_merged.sort_values(by=['Predicted Free Beds INCLUDING COVID-19 in 1 WEEK']).dropna()
 
 
 # # Go back to building the UK regions data for the dashboard
